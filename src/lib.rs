@@ -811,6 +811,126 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Transpose the grid in-place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.transpose_inplace();
+    /// assert_eq!(grid, grid![[1, 4][2, 5][3, 6]]);
+    /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method is O(n) in time and memory.
+    pub fn transpose_inplace(&mut self) {
+        // An empty grid transposed doesn't change; necessary to avoid underflow on `length - 1`.
+        if self.data.is_empty() {
+            return;
+        }
+        let length = self.data.len();
+        let mut visited = vec![false; length];
+        // The first and last element never have to move.
+        for idx in 1..(length - 1) {
+            if visited[idx] {
+                continue;
+            }
+            let mut next_idx = idx;
+            loop {
+                next_idx = (self.rows * next_idx) % (length - 1);
+                visited[next_idx] = true;
+                if next_idx == idx {
+                    break;
+                }
+                self.data.swap(idx, next_idx);
+            }
+        }
+        std::mem::swap(&mut self.rows, &mut self.cols);
+    }
+
+    /// Reverse the content of each row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.mirror_horizontally();
+    /// assert_eq!(grid, grid![[3,2,1][6,5,4]]);
+    /// ```
+    pub fn mirror_horizontally(&mut self) {
+        for r in 0..self.rows {
+            self[r].reverse();
+        }
+    }
+
+    /// Reverse the content of each column.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.mirror_vertically();
+    /// assert_eq!(grid, grid![[4,5,6][1,2,3]]);
+    /// ```
+    pub fn mirror_vertically(&mut self) {
+        for r in 0..(self.rows / 2) {
+            for c in 0..self.cols {
+                let cell1 = r * self.cols + c;
+                let cell2 = (self.rows - r - 1) * self.cols + c;
+                self.data.swap(cell1, cell2);
+            }
+        }
+    }
+
+    /// Rotate the grid 90° counter-clockwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.rotate_left();
+    /// assert_eq!(grid, grid![[3,6][2,5][1,4]]);
+    /// ```
+    pub fn rotate_left(&mut self) {
+        self.transpose_inplace();
+        self.mirror_vertically();
+    }
+
+    /// Rotate the grid 90° clockwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.rotate_right();
+    /// assert_eq!(grid, grid![[4,1][5,2][6,3]]);
+    /// ```
+    pub fn rotate_right(&mut self) {
+        self.transpose_inplace();
+        self.mirror_horizontally();
+    }
+
+    /// Rotate the grid 180°.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.rotate_half();
+    /// assert_eq!(grid, grid![[6,5,4][3,2,1]]);
+    /// ```
+    #[must_use]
+    pub fn rotate_half(&mut self) {
+        self.data.reverse();
+    }
+
     /// Fills the grid with elements by cloning `value`.
     ///
     /// # Examples
@@ -1775,6 +1895,34 @@ mod test {
     fn transpose() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         assert_eq!(format!("{:?}", grid.transpose()), "[[1, 4][2, 5][3, 6]]");
+    }
+
+    #[test]
+    fn transpose_inplace_square() {
+        let mut grid: Grid<u8> = grid![[1,2,3][4,5,6][7,8,9]];
+        grid.transpose_inplace();
+        assert_eq!(grid, grid![[1,4,7][2,5,8][3,6,9]]);
+    }
+
+    #[test]
+    fn transpose_inplace_5x2() {
+        let mut grid: Grid<u8> = grid![[0,1,2,3,4][5,6,7,8,9]];
+        grid.transpose_inplace();
+        assert_eq!(grid, grid![[0,5][1,6][2,7][3,8][4,9]]);
+    }
+
+    #[test]
+    fn transpose_inplace_1x1() {
+        let mut grid: Grid<u8> = grid![[42]];
+        grid.transpose_inplace();
+        assert_eq!(grid, grid![[42]]);
+    }
+
+    #[test]
+    fn transpose_inplace_empty() {
+        let mut grid: Grid<u8> = grid![];
+        grid.transpose_inplace();
+        assert_eq!(grid, grid![]);
     }
 
     #[test]

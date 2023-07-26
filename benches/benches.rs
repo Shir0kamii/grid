@@ -175,6 +175,68 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         )
     });
+
+    // Transpose
+    c.bench_function("grid_transpose", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |g| g.transpose(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_transpose_inplace", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.transpose_inplace(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    // Mirror
+    c.bench_function("grid_mirror_horizontally", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.mirror_horizontally(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_mirror_vertically", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.mirror_vertically(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    // Rotation
+    c.bench_function("grid_rotate_left", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.rotate_left(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_rotate_right", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.rotate_right(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_rotate_half", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.rotate_half(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
